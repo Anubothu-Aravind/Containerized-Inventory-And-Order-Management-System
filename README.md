@@ -19,7 +19,7 @@ StockFlow is a high-performance, containerized SaaS Operations Console designed 
 
 ### 🌐 Official Project Deliverables
 - **GitHub Monorepo (Frontend + Backend)**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
-- **Docker Hub Repository**: [anubothuaravind/stockflow-backend](https://hub.docker.com/r/anubothuaravind/stockflow-backend)
+- **Docker Hub Repository**: [aravind80137/stockflow-backend](https://hub.docker.com/r/aravind80137/stockflow-backend)
 - **Live Frontend URL**: `<REPLACE_WITH_ACTUAL_FRONTEND_URL>`
 - **Live Backend API URL**: `<REPLACE_WITH_ACTUAL_BACKEND_URL>`
 - **Interactive Swagger Docs**: `<REPLACE_WITH_ACTUAL_BACKEND_URL>/docs`
@@ -402,7 +402,7 @@ StockFlow V3 successfully implements every business requirement of the **Ethara.
 ## 📦 17. Final Deliverables
 
 *   **GitHub Repository URL**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
-*   **Docker Hub Backend Image**: [anubothuaravind/stockflow-backend](https://hub.docker.com/r/anubothuaravind/stockflow-backend)
+*   **Docker Hub Backend Image**: [aravind80137/stockflow-backend](https://hub.docker.com/r/aravind80137/stockflow-backend)
 *   **Frontend Live Deployment**: `<REPLACE_WITH_ACTUAL_FRONTEND_URL>`
 *   **Backend Live Deployment**: `<REPLACE_WITH_ACTUAL_BACKEND_URL>`
 *   **Swagger API Documentation**: `<REPLACE_WITH_ACTUAL_BACKEND_URL>/docs`
