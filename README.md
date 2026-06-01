@@ -5,9 +5,9 @@
 
 ## 🚀 1. Hero Section
 
-![StockFlow Banner](docs/screenshots/dashboard.png)
+![StockFlow Dashboard View](docs/screenshots/dashboard.png)
 
-StockFlow is a high-performance, containerized SaaS Operations Console designed for real-time inventory tracking, multi-step order checkouts, automated audit timelines, and interactive database-backed smart assistance. 
+StockFlow is a high-performance, containerized SaaS Operations Console designed for real-time inventory tracking, multi-step B2B order checkouts, automated audit timelines, and interactive natural-language database query assistance. 
 
 ### 🛡️ Tech Stack & Badges
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
@@ -18,7 +18,7 @@ StockFlow is a high-performance, containerized SaaS Operations Console designed 
 [![Alembic](https://img.shields.io/badge/Alembic-DB8B00?style=for-the-badge)](https://alembic.sqlalchemy.org)
 
 ### 🌐 Official Project Deliverables
-- **GitHub Monorepo**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
+- **GitHub Monorepo (Frontend + Backend)**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
 - **Docker Hub Repository**: [anubothuaravind/stockflow-backend](https://hub.docker.com/r/anubothuaravind/stockflow-backend)
 - **Live Frontend URL**: `<REPLACE_WITH_ACTUAL_FRONTEND_URL>`
 - **Live Backend API URL**: `<REPLACE_WITH_ACTUAL_BACKEND_URL>`
@@ -61,35 +61,27 @@ Below is a detailed verification of the requirements completed for the **Ethara.
 
 ---
 
-## 🖼️ 4. Product Features
+## 🖼️ 4. Product Features & Screenshots
 
-### 🔐 Interactive Glassmorphic Login Portal
-*   **Path**: `docs/screenshots/login.png`
+### 🔐 Glassmorphic Login Portal
+*   **Placeholder**: `docs/screenshots/login.png`
 *   Features an organic, shifting gradient backdrop with distinct seeder credentials footnotes (`admin`, `staff`, `customer`) for single-click authorization testing.
 
 ### 📊 SaaS Observability Command Dashboard
-*   **Path**: `docs/screenshots/dashboard.png`
+*   **Placeholder**: `docs/screenshots/dashboard.png`
 *   Equipped with analytical metric counters, dynamic **Interactive SVG Revenue Trend Charts**, category filters, and the chronological **Audit Trail Activity Timeline**.
 
 ### 📦 Unified Catalog Management Matrix
-*   **Path**: `docs/screenshots/products.png`
+*   **Placeholder**: `docs/screenshots/products.png`
 *   Exposes complete CRUD actions for administrators, low stock warnings, reorder suggestions, and rapid catalog category segmentation.
 
-### 🛒 Multi-Step Shopping Cart & Checkout
-*   **Path**: `docs/screenshots/orders.png`
+### 🛒 Multi-Step Shopping Cart & Checkout Drawer
+*   **Placeholder**: `docs/screenshots/orders.png`
 *   Provides slide-out cart drawers, dynamic pricing calculations, direct B2B customer assignment, and visual order fulfillment tracking.
 
-### ⚡ Global Ctrl+K Command Palette
-*   **Path**: `docs/screenshots/command-palette.png`
-*   A keyboard-first navigation overlay allowing instant navigation, theme toggling, quick seeder actions, and unified catalog/order searches.
-
-### 🤖 Live NLP Operations Assistant
-*   **Path**: `docs/screenshots/operations-assistant.png`
-*   A sliding workspace panel parsing natural language inputs (like `/status`, `/low-stock`, `/categories`) to calculate complex inventory coverage and database statuses.
-
-### 📱 Responsive Mobile Viewport
-*   **Path**: `docs/screenshots/mobile-view.png`
-*   Features a responsive, slide-out sidebar menu and optimized grids to ensure seamless operations on tablets and phones.
+### 📊 Historical Billing Curves & Reporting
+*   **Placeholder**: `docs/screenshots/analytics.png`
+*   Comprehensive data reporting interface plotting dense 30-day transactional curves and sales distribution segments.
 
 ---
 
@@ -99,26 +91,26 @@ The system employs a clean three-tier architecture with full environment decoupl
 
 ```mermaid
 flowchart TD
-    subgraph Client Tier [React Frontend Client - Port 5173]
+    subgraph ClientTier ["React Frontend Client - Port 5173"]
         A[AppSaaS.jsx Core Workspace] --> B[AppChrome.jsx Layout Shell]
         B --> C1[Command Palette Modal]
         B --> C2[Operations Assistant Drawer]
         B --> C3[Notifications Popover]
     end
 
-    subgraph Service Tier [FastAPI REST Backend - Port 8000]
+    subgraph ServiceTier ["FastAPI REST Backend - Port 8000"]
         D[Router API Middleware] --> E[Token-Based RBAC Auth]
         D --> F[Orders Checkout Engine]
         D --> G[Catalog CRUD Service]
         D --> H[Activity & Notification Logger]
     end
 
-    subgraph Persistence Tier [PostgreSQL DB - Port 5432]
+    subgraph PersistenceTier ["PostgreSQL DB - Port 5432"]
         I[(PostgreSQL Database)]
     end
 
-    Client Tier -- Async JSON REST over HTTP --> Service Tier
-    Service Tier -- Asyncpg SQL Driver --> Persistence Tier
+    ClientTier -->|Async JSON REST over HTTP| ServiceTier
+    ServiceTier -->|Asyncpg SQL Driver| PersistenceTier
 ```
 
 ---
@@ -138,72 +130,66 @@ StockFlow is engineered around asynchronous data processing pipelines:
 
 ```mermaid
 erDiagram
+    USERS ||--o{ ACTIVITY_LOGS : "performs"
+    CUSTOMERS ||--o{ ORDERS : "places"
+    ORDERS ||--o{ ORDER_ITEMS : "contains"
+    PRODUCTS ||--o{ ORDER_ITEMS : "referenced_by"
+
     USERS {
-        int id PK
-        string username UNIQUE
-        string email UNIQUE
+        int id
+        string username
+        string email
         string hashed_password
         string role
         datetime created_at
     }
-
     PRODUCTS {
-        int id PK
-        string sku UNIQUE
+        int id
+        string sku
         string name
         string category
         int quantity
-        decimal price
+        float price
         datetime created_at
     }
-
     CUSTOMERS {
-        int id PK
+        int id
         string full_name
-        string email UNIQUE
+        string email
         string phone
         string address
         datetime created_at
     }
-
     ORDERS {
-        int id PK
-        int customer_id FK
-        decimal total_amount
+        int id
+        int customer_id
+        float total_amount
         string status
         datetime created_at
     }
-
     ORDER_ITEMS {
-        int id PK
-        int order_id FK
-        int product_id FK
+        int id
+        int order_id
+        int product_id
         int quantity
-        decimal unit_price
-        decimal line_total
+        float unit_price
+        float line_total
     }
-
     ACTIVITY_LOGS {
-        int id PK
+        int id
         string username
         string action
         string target
         string category
         datetime timestamp
     }
-
     NOTIFICATIONS {
-        int id PK
+        int id
         string message
         string level
         boolean is_read
         datetime created_at
     }
-
-    USERS ||--o{ ACTIVITY_LOGS : performs
-    CUSTOMERS ||--o{ ORDERS : places
-    ORDERS ||--o{ ORDER_ITEMS : contains
-    PRODUCTS ||--o{ ORDER_ITEMS : referenced_by
 ```
 
 ---
@@ -273,8 +259,10 @@ All SKU inputs and customer email registrations undergo unique constraint verifi
 ```mermaid
 flowchart TD
     A[User Submits SKU/Email] --> B{Verify Database for Exists?}
-    B -- Yes, Duplicate Found --> C[Rollback SQL Session] --> D[Return 400 Bad Request]
-    B -- No, Unique Target --> E[Persist Entry in DB] --> F[Return 201 Success]
+    B -->|Yes, Duplicate Found| C[Rollback SQL Session]
+    C --> D[Return 400 Bad Request]
+    B -->|No, Unique Target| E[Persist Entry in DB]
+    E --> F[Return 201 Success]
 ```
 
 ### Transactional Inventory Validation & Restoration Flowchart
@@ -283,8 +271,8 @@ StockFlow ensures atomic stock calculations to prevent negative quantities:
 ```mermaid
 flowchart TD
     A[Order Checkout Request] --> B{Verify Stock Levels?}
-    B -- Insufficient Stock --> C[Return 422 Unprocessable Entity]
-    B -- Sufficient Stock --> D[Reduce Product Quantity]
+    B -->|Insufficient Stock| C[Return 422 Unprocessable Entity]
+    B -->|Sufficient Stock| D[Reduce Product Quantity]
     D --> E[Create Order & Commit Transaction]
     E --> F[Log Event & Alert Notifications]
     
@@ -313,7 +301,7 @@ flowchart LR
 
 ## 🚀 11. Deployment Guide
 
-### Local Deployment in 3 Steps
+### Local Setup in 3 Steps
 1.  **Clone Repo & Initialize Environment Variables**:
     ```bash
     git clone https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System
@@ -346,14 +334,31 @@ flowchart LR
 *   *Problem*: The browser blocked the frontend's REST API requests due to cross-origin validation issues between ports `5173` and `8000`.
 *   *Solution*: Integrated dynamic CORS middleware (`CORSMiddleware`) in the FastAPI backend, reading safe whitelist origins directly from `.env`.
 
+### Challenge 4: Order Stock Validation Race Conditions
+*   *Problem*: In-flight checkout math risks using stale database metrics before commits.
+*   *Solution*: Added strict backend-side verification checks immediately preceding database session commits.
+
+### Challenge 5: Responsive Dashboard Complexity
+*   *Problem*: Rich SVG graphs and timelines overflowed on mobile views.
+*   *Solution*: Created fluid CSS grids, media-query triggers, and adaptive sidebar toggles inside `main.css`.
+
 ---
 
 ## ⚡ 13. Performance & Security Optimizations
 
-*   **API & Query Performance**: Utilized async database connections (`asyncpg`) and loaded relations selectively to avoid the N+1 query problem.
-*   **State Optimization**: Combined browser storage caching (`localStorage`) with local UI states in React, minimizing unnecessary API requests while keeping token authorization secure.
-*   **Docker Slimming**: Used multi-stage Docker builds to reduce image sizes to under 80MB for the static client, and pinned slim python libraries for backend security.
+### Performance Optimizations
+*   **API Optimization**: Utilized async database connections (`asyncpg`) and loaded relations selectively to avoid the N+1 query problem.
+*   **Query Optimization**: Placed SQL indexes on columns commonly used in searches, such as product SKUs.
+*   **State Management**: Combined browser storage caching (`localStorage`) with local UI states in React, minimizing unnecessary API requests while keeping token authorization secure.
+*   **Lazy Loading**: Split routes using dynamic React imports to decrease initial javascript payloads.
+*   **Docker Image Optimization**: Used multi-stage Docker builds to reduce image sizes to under 80MB for the static client, and pinned slim python libraries for backend security.
+
+### Security Considerations
+*   **Environment Variables**: Extracted all private secrets and port variables out of source code into isolated `.env` environments.
+*   **Secret Management**: Managed authorization tokens with strong `HS256` hashing algorithms and protected standard admin logins.
+*   **Input Validation**: Enforced strict runtime structure schemas via robust FastAPI Pydantic parsing engines.
 *   **SQL Injection Prevention**: Avoided raw SQL string concatenation, instead executing queries using safe, parameters-driven SQLAlchemy ORM models.
+*   **Authentication**: Enforced route-level OAuth2 password bearer token checks before exposing administrative routes.
 
 ---
 
@@ -380,6 +385,7 @@ flowchart LR
 *   **Docker Orchestration**: Standardizing development environments with Docker containers removes the classic "it works on my machine" problem, simplifying local setups for reviewers.
 *   **Database Architecture**: Structuring tables with unique relational constraints and automated cascade deletions ensures data remains consistent over long transactional lifecycles.
 *   **Frontend UX Design**: Implementing global command search shortcuts (`Ctrl+K`) and smooth hover animations dramatically improves daily productivity for operations staff.
+*   **Deployment lessons**: Building static build outputs hosted on CDN edges like Vercel paired with Render Docker web services provides a scalable architecture for production systems.
 
 ---
 
