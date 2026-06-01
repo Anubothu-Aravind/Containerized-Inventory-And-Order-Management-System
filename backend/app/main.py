@@ -34,7 +34,21 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def _seed_demo_users() -> None:
+        from sqlalchemy import select, func
+        from app.db.models import Product
+        from app.db.session import get_sessionmaker
+        from app.db.seed import generate_large_demo_dataset
+        
+        # 1. Seed base users and sample widgets first
         await seed_demo_data()
+        
+        # 2. Check if product database is empty to trigger full V3 seeder automatically
+        sessionmaker = get_sessionmaker()
+        async with sessionmaker() as db:
+            product_count = await db.scalar(select(func.count(Product.id)))
+            # If database has no products (or only the single base sample-widget), run full generation
+            if product_count is None or product_count <= 1:
+                await generate_large_demo_dataset(db)
 
     return app
 

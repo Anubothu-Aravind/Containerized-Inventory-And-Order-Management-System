@@ -1635,17 +1635,17 @@ export default function AppSaaS() {
                   {activityLogs.slice(0, 8).map((log) => (
                     <div key={log.id} className="line-item" style={{ padding: "12px", border: "1px solid var(--border)", borderRadius: "12px", background: "var(--surface-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <strong style={{ fontSize: "13px", color: "var(--text)" }}>{log.action.replace(/_/g, ' ').toUpperCase()}</strong>
+                        <strong style={{ fontSize: "13px", color: "var(--text)" }}>{(log.event || log.action || "Event").replace(/_/g, ' ').toUpperCase()}</strong>
                         <p style={{ margin: "2px 0 0", color: "var(--muted)", fontSize: "12px" }}>{log.details}</p>
                         <small style={{ color: "var(--muted)", fontSize: "10px", opacity: 0.8 }}>
-                          Performed by User #{log.user_id} · {new Date(log.created_at).toLocaleString()}
+                          System Event · {new Date(log.created_at).toLocaleString()}
                         </small>
                       </div>
                       <Badge tone={
-                        log.action.includes("create") ? "success" :
-                        log.action.includes("delete") ? "danger" : "warning"
+                        (log.event || log.action || "").toLowerCase().includes("create") || (log.event || log.action || "").toLowerCase().includes("seed") || (log.event || log.action || "").toLowerCase().includes("init") ? "success" :
+                        (log.event || log.action || "").toLowerCase().includes("delete") || (log.event || log.action || "").toLowerCase().includes("cancel") ? "danger" : "warning"
                       }>
-                        {log.action.split("_")[0]}
+                        {(log.event || log.action || "Activity").split(" ")[0]}
                       </Badge>
                     </div>
                   ))}

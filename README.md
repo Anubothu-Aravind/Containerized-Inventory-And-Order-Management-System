@@ -301,22 +301,26 @@ flowchart LR
 
 ## 🚀 11. Deployment Guide
 
-### Local Setup in 3 Steps
-1.  **Clone Repo & Initialize Environment Variables**:
-    ```bash
-    git clone https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System
-    cd Containerized-Inventory-And-Order-Management-System
-    cp .env.example .env
-    ```
-2.  **Start Services**:
-    ```bash
-    docker compose up --build -d
-    ```
-3.  **Hydrate Demo Data**:
-    Log in as **Admin** and press `Ctrl+K`, type `/reseed` and press enter, or trigger seeding using curl:
-    ```bash
-    curl -X POST http://localhost:8000/admin/generate-demo-data
-    ```
+### Local Setup in a Single Command
+
+StockFlow V3 is engineered with built-in database creation checks, automatic schema migrations, and instant demo data seeding. A reviewer only needs to execute a **single command** to fully boot and access the platform.
+
+1. **Clone and Navigate**:
+   ```bash
+   git clone https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System
+   cd Containerized-Inventory-And-Order-Management-System
+   ```
+
+2. **Boot the Platform**:
+   ```bash
+   docker compose up --build
+   ```
+
+*Everything else is handled automatically!* On container launch:
+- The PostgreSQL service initializes and performs a healthy check.
+- The backend service waits for the healthy database, executes all Alembic schema upgrades to head, and starts the FastAPI server.
+- The startup event verifies if the database is empty, and automatically hydrates a dynamic 30-day historical dataset consisting of **50 products**, **20 customers**, and **100 orders** (including notifications and log timeline streams) so you immediately have rich data to evaluate.
+- The frontend Vite client automatically compiles static assets and connects using default container network parameters.
 
 ---
 
