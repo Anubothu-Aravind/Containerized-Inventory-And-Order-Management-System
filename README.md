@@ -20,7 +20,7 @@ StockFlow is a high-performance, containerized SaaS Operations Console designed 
 ### 🌐 Official Project Deliverables
 - **GitHub Monorepo (Frontend + Backend)**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
 - **Docker Hub Repository**: [aravind80137/stockflow-backend](https://hub.docker.com/r/aravind80137/stockflow-backend)
-- **Live Frontend URL**: `<REPLACE_WITH_ACTUAL_FRONTEND_URL>`
+- **Live Frontend URL**: [https://containerized-inventory-and-order-m.vercel.app](https://containerized-inventory-and-order-m.vercel.app)
 - **Live Backend API URL**: [https://stockflow-backend-mgax.onrender.com](https://stockflow-backend-mgax.onrender.com)
 - **Interactive Swagger Docs**: [https://stockflow-backend-mgax.onrender.com/docs](https://stockflow-backend-mgax.onrender.com/docs)
 - **Portfolio Demo Video**: `<REPLACE_WITH_ACTUAL_DEMO_VIDEO_URL>`
@@ -403,7 +403,7 @@ StockFlow V3 successfully implements every business requirement of the **Ethara.
 
 *   **GitHub Repository URL**: [Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System](https://github.com/Anubothu-Aravind/Containerized-Inventory-And-Order-Management-System)
 *   **Docker Hub Backend Image**: [aravind80137/stockflow-backend](https://hub.docker.com/r/aravind80137/stockflow-backend)
-*   **Frontend Live Deployment**: `<REPLACE_WITH_ACTUAL_FRONTEND_URL>`
+*   **Frontend Live Deployment**: [https://containerized-inventory-and-order-m.vercel.app](https://containerized-inventory-and-order-m.vercel.app)
 *   **Backend Live Deployment**: [https://stockflow-backend-mgax.onrender.com](https://stockflow-backend-mgax.onrender.com)
 *   **Swagger API Documentation**: [https://stockflow-backend-mgax.onrender.com/docs](https://stockflow-backend-mgax.onrender.com/docs)
 *   **Portfolio Demo Video**: `<REPLACE_WITH_ACTUAL_DEMO_VIDEO_URL>`
