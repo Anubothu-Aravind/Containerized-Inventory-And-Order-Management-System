@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from decimal import Decimal
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Customer, Order, OrderItem, Product, User, ActivityLog, Notification

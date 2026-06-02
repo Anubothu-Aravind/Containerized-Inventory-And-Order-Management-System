@@ -35,6 +35,8 @@ export default function AppChrome({
   onCommandPaletteTrigger,
   onProfile,
   onLogout,
+  cartCount = 0,
+  onCartTrigger,
   children,
 }) {
   // Theme logic state
@@ -407,6 +409,44 @@ export default function AppChrome({
               title={`Switch to ${theme === "light" ? "Dark" : "Light"} Mode`}
             >
               <Icon name={theme === "light" ? "moon" : "sun"} className="w-5 h-5" style={{ color: "var(--accent)" }} />
+            </button>
+
+            {/* Topbar Cart Button */}
+            <button
+              onClick={onCartTrigger}
+              className="ui-button ui-button--secondary"
+              style={{
+                height: "42px",
+                minHeight: "42px",
+                padding: "0 14px",
+                borderRadius: "12px",
+                border: "1px solid var(--border)",
+                background: "var(--surface)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-soft)",
+              }}
+              title="Open Shopping Cart"
+            >
+              <Icon name="cart" className="w-5 h-5" style={{ color: "var(--accent)" }} />
+              <span className="cart-text" style={{ fontSize: "13px", fontWeight: "700", color: "var(--text)" }}>Cart</span>
+              {cartCount > 0 && (
+                <span style={{
+                  background: "var(--danger)",
+                  color: "#fff",
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  borderRadius: "999px",
+                  padding: "1px 6px",
+                  minWidth: "18px",
+                  textAlign: "center",
+                  border: "1px solid var(--surface)"
+                }}>
+                  {cartCount}
+                </span>
+              )}
             </button>
 
             {/* Operations Assistant Trigger */}

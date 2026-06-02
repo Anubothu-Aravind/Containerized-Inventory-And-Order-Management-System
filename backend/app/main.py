@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,12 +8,33 @@ from app.core.config import settings
 from app.db.seed import seed_demo_data
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Seed base users and sample widgets first
+    await seed_demo_data()
+    
+    # 2. Check if product database is empty to trigger full V3 seeder automatically
+    from sqlalchemy import select, func
+    from app.db.models import Product
+    from app.db.session import get_sessionmaker
+    from app.db.seed import generate_large_demo_dataset
+    
+    sessionmaker = get_sessionmaker()
+    async with sessionmaker() as db:
+        product_count = await db.scalar(select(func.count(Product.id)))
+        # If database has no products (or only the single base sample-widget), run full generation
+        if product_count is None or product_count <= 1:
+            await generate_large_demo_dataset(db)
+    yield
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     # Ensure production Vercel domains and local hosts are always allowed
@@ -44,25 +67,8 @@ def create_app() -> FastAPI:
     app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
     app.include_router(activity_logs.router, prefix="/activity-logs", tags=["activity-logs"])
 
-    @app.on_event("startup")
-    async def _seed_demo_users() -> None:
-        from sqlalchemy import select, func
-        from app.db.models import Product
-        from app.db.session import get_sessionmaker
-        from app.db.seed import generate_large_demo_dataset
-        
-        # 1. Seed base users and sample widgets first
-        await seed_demo_data()
-        
-        # 2. Check if product database is empty to trigger full V3 seeder automatically
-        sessionmaker = get_sessionmaker()
-        async with sessionmaker() as db:
-            product_count = await db.scalar(select(func.count(Product.id)))
-            # If database has no products (or only the single base sample-widget), run full generation
-            if product_count is None or product_count <= 1:
-                await generate_large_demo_dataset(db)
-
     return app
 
 
 app = create_app()
+

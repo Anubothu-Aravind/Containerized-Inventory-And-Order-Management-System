@@ -419,6 +419,11 @@ export default function AppSaaS() {
   const [checkoutStep, setCheckoutStep] = useState(1); // 1 = Cart Review, 2 = Customer Select, 3 = Confirmation, 4 = Complete
   const [checkoutCustomerId, setCheckoutCustomerId] = useState("");
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cardHolderName, setCardHolderName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
 
   const currentUser = auth?.user ?? null;
   const isAuthed = Boolean(auth?.access_token);
@@ -991,6 +996,7 @@ export default function AppSaaS() {
 
   // Shopping Cart & Multi-Step Checkout Actions
   function addToCart(product, quantity = 1) {
+    setCartOpen(true);
     setCart((currentCart) => {
       const existing = currentCart.find((item) => item.product.id === product.id);
       if (existing) {
@@ -1026,6 +1032,22 @@ export default function AppSaaS() {
     setCheckoutStep(1);
     setCheckoutCustomerId("");
     setPlacedOrder(null);
+    setCardHolderName("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+  }
+
+  function closeCartDrawer() {
+    setCartOpen(false);
+    if (placedOrder) {
+      setPlacedOrder(null);
+      setCheckoutStep(1);
+      setCardHolderName("");
+      setCardNumber("");
+      setCardExpiry("");
+      setCardCvv("");
+    }
   }
 
   async function submitCartOrder(event) {
@@ -1419,6 +1441,8 @@ export default function AppSaaS() {
       onCommandPaletteTrigger={() => setCommandPaletteOpen(true)}
       onProfile={() => setView("profile")}
       onLogout={handleLogout}
+      cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+      onCartTrigger={() => setCartOpen(true)}
     >
       {message ? <div className="notice notice--inline">{message}</div> : null}
       {isLoading ? <div className="notice notice--inline notice--loading">Synchronizing StockFlow workspace...</div> : null}
@@ -1740,10 +1764,10 @@ export default function AppSaaS() {
 
       {view === "products" ? (
         <div className="page-stack">
+          {/* Toolbar */}
           <Card className="toolbar-card">
             <div className="toolbar-card__row">
               <Input label="Search products" placeholder="Search by name or SKU" value={productSearch} onChange={(event) => setProductSearch(event.target.value)} />
-              
               <label className="field">
                 <span className="field-label">Category</span>
                 <select className="ui-input" value={selectedCategoryFilter} onChange={(event) => setSelectedCategoryFilter(event.target.value)}>
@@ -1752,7 +1776,6 @@ export default function AppSaaS() {
                   ))}
                 </select>
               </label>
-
               <label className="field">
                 <span className="field-label">Stock Status</span>
                 <select className="ui-input" value={productFilter} onChange={(event) => setProductFilter(event.target.value)}>
@@ -1761,7 +1784,6 @@ export default function AppSaaS() {
                   <option value="low">Low stock</option>
                 </select>
               </label>
-
               <label className="field">
                 <span className="field-label">Sort By</span>
                 <select className="ui-input" value={productSort} onChange={(event) => setProductSort(event.target.value)}>
@@ -1771,108 +1793,114 @@ export default function AppSaaS() {
                 </select>
               </label>
             </div>
-            <div className="toolbar-card__actions">{canManageProducts ? <Button variant="primary" onClick={() => openProductDialog("create")}>Add product</Button> : null}</div>
-          </Card>
-
-          <Card className="table-card">
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Name</th><th>Category</th><th>SKU</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody>
-                  {filteredProducts.length ? filteredProducts.map((product) => (
-                    <tr key={product.id} className="table-row-hover">
-                      <td>{product.name}</td>
-                      <td><Badge tone="neutral">{product.category || "Uncategorized"}</Badge></td>
-                      <td>{product.sku}</td>
-                      <td>{money(product.price)}</td>
-                      <td>{product.quantity_in_stock}</td>
-                      <td><Badge tone={product.quantity_in_stock <= 2 ? "warning" : "success"}>{product.quantity_in_stock <= 2 ? "Low stock" : "Healthy"}</Badge></td>
-                      <td>
-                        <div className="row-actions">
-                          <Button variant="ghost" size="sm" onClick={() => openProductDrawer(product)}>View</Button>
-                          <Button variant="secondary" size="sm" onClick={() => addToCart(product, 1)} disabled={product.quantity_in_stock <= 0}>
-                            {product.quantity_in_stock <= 0 ? "Out of stock" : "Add to cart"}
-                          </Button>
-                          {canManageProducts ? <Button variant="secondary" size="sm" onClick={() => openProductDialog("edit", product)}>Edit</Button> : null}
-                          {canManageProducts ? <Button variant="danger" size="sm" onClick={() => removeProduct(product)}>Delete</Button> : null}
-                        </div>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={7}><div className="empty-state inline"><h3>No products found</h3><p>{productSearch ? "Try another search." : "Create your first product to populate the catalog."}</p>{canManageProducts ? <Button variant="primary" onClick={() => openProductDialog("create")}>Add product</Button> : null}</div></td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="toolbar-card__actions">
+              {canManageProducts ? <Button variant="primary" onClick={() => openProductDialog("create")}>Add product</Button> : null}
             </div>
           </Card>
-        </div>
-      ) : null}
 
-      {/* Shopping Cart & Multi-Step Checkout UI Panel (Always accessible in product view or layout sidebar) */}
-      {view === "products" && cart.length > 0 && (
-        <Card className="panel-card" style={{ marginTop: "24px", border: "2px solid var(--accent-strong)" }}>
-          <SectionHeader kicker="Checkout Flow" title="Shopping Cart Drawer" action={<Button variant="ghost" size="sm" onClick={clearCart}>Clear Cart</Button>} />
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "20px", marginTop: "16px" }}>
-            {/* Step 1: Cart review */}
-            <div>
-              <h3 style={{ fontSize: "14px", fontWeight: "700", marginBottom: "12px" }}>Selected Products ({cart.length})</h3>
-              <div className="line-items" style={{ display: "grid", gap: "8px" }}>
-                {cart.map((item) => (
-                  <div key={item.product.id} className="line-item" style={{ padding: "12px", border: "1px solid var(--border)", borderRadius: "10px", background: "var(--surface-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {/* View Cart Banner — shown when cart has items */}
+          {cart.length > 0 && (
+            <div className="view-cart-banner">
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--accent-strong)" }}>
+                  🛒 {cart.reduce((s, i) => s + i.quantity, 0)} item{cart.reduce((s, i) => s + i.quantity, 0) !== 1 ? "s" : ""} in your cart
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
+                  Subtotal: {money(cart.reduce((s, i) => s + i.product.price * i.quantity, 0))}
+                </div>
+              </div>
+              <Button variant="primary" onClick={() => setCartOpen(true)}>View Cart &amp; Checkout →</Button>
+            </div>
+          )}
+
+          {/* CUSTOMER: Card grid catalog */}
+          {role === "CUSTOMER" ? (
+            filteredProducts.length ? (
+              <div className="catalog-grid">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="product-card">
                     <div>
-                      <strong>{item.product.name}</strong>
-                      <p style={{ margin: "2px 0 0", color: "var(--muted)", fontSize: "12px" }}>{money(item.product.price)} each • Max: {item.product.quantity_in_stock}</p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginBottom: "4px" }}>
+                        <span className="product-card__name">{product.name}</span>
+                        <Badge tone={product.quantity_in_stock <= 2 ? "warning" : "success"} style={{ flexShrink: 0 }}>
+                          {product.quantity_in_stock <= 0 ? "Out" : product.quantity_in_stock <= 2 ? "Low" : "In stock"}
+                        </Badge>
+                      </div>
+                      <div className="product-card__sku">{product.sku}</div>
+                      {product.category && (
+                        <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "4px" }}>
+                          {product.category}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        max={item.product.quantity_in_stock} 
-                        value={item.quantity} 
-                        onChange={(e) => updateCartQuantity(item.product.id, parseInt(e.target.value))} 
-                        style={{ width: "60px", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--border)" }}
-                      />
-                      <Button variant="ghost" size="sm" onClick={() => removeFromCart(item.product.id)}>×</Button>
+
+                    <div style={{ height: "1px", background: "var(--border)" }} />
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span className="product-card__price">{money(product.price)}</span>
+                      <span style={{ fontSize: "12px", color: "var(--muted)" }}>{product.quantity_in_stock} left</span>
+                    </div>
+
+                    <div style={{ display: "grid", gap: "8px" }}>
+                      <button
+                        className="product-card__add-btn"
+                        onClick={() => addToCart(product, 1)}
+                        disabled={product.quantity_in_stock <= 0}
+                      >
+                        {product.quantity_in_stock <= 0 ? "Out of stock" : cart.some(i => i.product.id === product.id) ? "+ Add more" : "Add to Cart"}
+                      </button>
+                      <button className="product-card__view-btn" onClick={() => openProductDrawer(product)}>
+                        View details
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Right side check info */}
-            <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "20px" }}>
-              <div style={{ display: "grid", gap: "12px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>Subtotal:</span>
-                  <strong>{money(cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0))}</strong>
+            ) : (
+              <Card className="panel-card">
+                <div className="empty-state inline">
+                  <h3>No products found</h3>
+                  <p>{productSearch ? "Try a different search term." : "The catalog is empty."}</p>
                 </div>
-
-                {role !== "CUSTOMER" && (
-                  <label className="field">
-                    <span className="field-label">Assign Customer:</span>
-                    <select className="ui-input" value={checkoutCustomerId} onChange={(e) => setCheckoutCustomerId(e.target.value)}>
-                      <option value="">-- Choose Customer --</option>
-                      {customers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.full_name} ({c.email})</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-
-                <Button 
-                  variant="primary" 
-                  onClick={submitCartOrder} 
-                  disabled={busyAction === "order" || (role !== "CUSTOMER" && !checkoutCustomerId)}
-                  style={{ width: "100%", marginTop: "8px" }}
-                >
-                  {busyAction === "order" ? "Placing Order..." : "Confirm & Place Order"}
-                </Button>
+              </Card>
+            )
+          ) : (
+            /* ADMIN / STAFF: Table view with full management controls */
+            <Card className="table-card">
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>Name</th><th>Category</th><th>SKU</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {filteredProducts.length ? filteredProducts.map((product) => (
+                      <tr key={product.id} className="table-row-hover">
+                        <td>{product.name}</td>
+                        <td><Badge tone="neutral">{product.category || "Uncategorized"}</Badge></td>
+                        <td>{product.sku}</td>
+                        <td>{money(product.price)}</td>
+                        <td>{product.quantity_in_stock}</td>
+                        <td><Badge tone={product.quantity_in_stock <= 2 ? "warning" : "success"}>{product.quantity_in_stock <= 2 ? "Low stock" : "Healthy"}</Badge></td>
+                        <td>
+                          <div className="row-actions">
+                            <Button variant="ghost" size="sm" onClick={() => openProductDrawer(product)}>View</Button>
+                            <Button variant="secondary" size="sm" onClick={() => addToCart(product, 1)} disabled={product.quantity_in_stock <= 0}>
+                              {product.quantity_in_stock <= 0 ? "Out of stock" : "Add to cart"}
+                            </Button>
+                            {canManageProducts ? <Button variant="secondary" size="sm" onClick={() => openProductDialog("edit", product)}>Edit</Button> : null}
+                            {canManageProducts ? <Button variant="danger" size="sm" onClick={() => removeProduct(product)}>Delete</Button> : null}
+                          </div>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={7}><div className="empty-state inline"><h3>No products found</h3><p>{productSearch ? "Try another search." : "Create your first product."}</p>{canManageProducts ? <Button variant="primary" onClick={() => openProductDialog("create")}>Add product</Button> : null}</div></td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </div>
-        </Card>
-      )}
+            </Card>
+          )}
+        </div>
+      ) : null}
+
 
       {view === "customers" && role !== "CUSTOMER" ? (
         <div className="page-stack">
@@ -2454,6 +2482,607 @@ export default function AppSaaS() {
       <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} title={`Delete ${confirmAction?.kind || "item"}?`} description={confirmAction ? `${confirmAction.label} will be removed. This action cannot be undone.` : ""} footer={<div className="dialog-actions"><Button variant="ghost" onClick={() => setConfirmAction(null)} type="button">Cancel</Button><Button variant="danger" onClick={performDelete} type="button">Delete</Button></div>}>
         <p>This will permanently remove the selected record from the workspace.</p>
       </Dialog>
+
+      {/* Floating Cart Drawer Button */}
+      {isAuthed && cart.length > 0 && !cartOpen && (
+        <button
+          onClick={() => setCartOpen(true)}
+          style={{
+            position: "fixed",
+            bottom: "28px",
+            right: "28px",
+            background: "linear-gradient(135deg, var(--accent), var(--accent-strong))",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            width: "64px",
+            height: "64px",
+            display: "grid",
+            placeItems: "center",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+            cursor: "pointer",
+            zIndex: 9999,
+            transition: "transform 0.2s ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          title="Open Shopping Cart"
+        >
+          <Icon name="cart" className="w-6 h-6" style={{ color: "#fff" }} />
+          <span
+            style={{
+              position: "absolute",
+              top: "-4px",
+              right: "-4px",
+              background: "var(--danger)",
+              color: "#fff",
+              fontSize: "11px",
+              fontWeight: "700",
+              borderRadius: "50%",
+              width: "22px",
+              height: "22px",
+              display: "grid",
+              placeItems: "center",
+              border: "2px solid var(--surface)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            }}
+          >
+            {cart.reduce((sum, item) => sum + item.quantity, 0)}
+          </span>
+        </button>
+      )}
+
+      {/* Global Sliding Cart Drawer Overlay & Panel */}
+      {isAuthed && cartOpen && (
+        <>
+          <style>{`
+            @keyframes slideInCart {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+            @keyframes fadeInBackdrop {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            .cart-stepper {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              position: relative;
+              margin-bottom: 24px;
+              padding: 0 8px;
+            }
+            .cart-stepper::before {
+              content: "";
+              position: absolute;
+              top: 50%;
+              left: 0;
+              right: 0;
+              height: 2px;
+              background: var(--border);
+              z-index: 1;
+              transform: translateY(-50%);
+            }
+            .cart-step-node {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              background: var(--surface-soft);
+              border: 2px solid var(--border);
+              display: grid;
+              place-items: center;
+              font-size: 12px;
+              font-weight: 700;
+              color: var(--muted);
+              z-index: 2;
+              transition: all 0.25s ease;
+            }
+            .cart-step-node--active {
+              background: var(--accent);
+              border-color: var(--accent);
+              color: #fff;
+              box-shadow: 0 0 10px var(--accent-soft);
+            }
+            .cart-step-node--complete {
+              background: var(--success);
+              border-color: var(--success);
+              color: #fff;
+            }
+            .cart-step-label {
+              font-size: 10px;
+              font-weight: 700;
+              color: var(--muted);
+              margin-top: 4px;
+              text-align: center;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .cart-step-container {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              z-index: 2;
+            }
+          `}</style>
+          
+          <div 
+            onClick={closeCartDrawer}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(4px)",
+              zIndex: 99998,
+              animation: "fadeInBackdrop 0.25s ease-out forwards",
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: "460px",
+              maxWidth: "100%",
+              background: "var(--surface)",
+              borderLeft: "1px solid var(--border-strong)",
+              boxShadow: "var(--shadow-strong)",
+              display: "flex",
+              flexDirection: "column",
+              padding: "28px",
+              zIndex: 99999,
+              animation: "slideInCart 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "var(--text)", fontFamily: "Space Grotesk, sans-serif" }}>Shopping Cart</h2>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--muted)" }}>Secure multi-step checkout workflow</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                {cart.length > 0 && checkoutStep === 1 && (
+                  <Button variant="ghost" size="sm" onClick={clearCart}>Clear</Button>
+                )}
+                <button 
+                  onClick={closeCartDrawer} 
+                  style={{ 
+                    padding: "8px", 
+                    borderRadius: "10px", 
+                    border: "1px solid var(--border)", 
+                    cursor: "pointer", 
+                    background: "var(--surface-soft)",
+                    color: "var(--text)",
+                    display: "grid",
+                    placeItems: "center"
+                  }}
+                >
+                  <Icon name="x" className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Stepper Progress Indicator */}
+            {!placedOrder && (
+              <div className="cart-stepper">
+                <div className="cart-step-container">
+                  <div className={`cart-step-node ${checkoutStep >= 1 ? (checkoutStep > 1 ? "cart-step-node--complete" : "cart-step-node--active") : ""}`}>
+                    {checkoutStep > 1 ? "✓" : "1"}
+                  </div>
+                  <span className="cart-step-label">Cart</span>
+                </div>
+
+                {role !== "CUSTOMER" && (
+                  <div className="cart-step-container">
+                    <div className={`cart-step-node ${checkoutStep >= 2 ? (checkoutStep > 2 ? "cart-step-node--complete" : "cart-step-node--active") : ""}`}>
+                      {checkoutStep > 2 ? "✓" : "2"}
+                    </div>
+                    <span className="cart-step-label">Customer</span>
+                  </div>
+                )}
+
+                <div className="cart-step-container">
+                  <div className={`cart-step-node ${checkoutStep >= 3 ? (checkoutStep > 3 ? "cart-step-node--complete" : "cart-step-node--active") : ""}`}>
+                    {checkoutStep > 3 ? "✓" : (role === "CUSTOMER" ? "2" : "3")}
+                  </div>
+                  <span className="cart-step-label">Payment</span>
+                </div>
+
+                <div className="cart-step-container">
+                  <div className={`cart-step-node ${checkoutStep >= 4 ? "cart-step-node--active" : ""}`}>
+                    {role === "CUSTOMER" ? "3" : "4"}
+                  </div>
+                  <span className="cart-step-label">Confirm</span>
+                </div>
+              </div>
+            )}
+
+            {/* Drawer Body - Flow steps */}
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", paddingRight: "4px" }}>
+              
+              {/* SUCCESS STATE */}
+              {placedOrder ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "30px 0", flex: 1 }}>
+                  <div style={{
+                    width: "80px",
+                    height: "80px",
+                    borderRadius: "50%",
+                    background: "var(--success-soft)",
+                    color: "var(--success)",
+                    display: "grid",
+                    placeItems: "center",
+                    marginBottom: "20px",
+                    border: "2px solid var(--success-strong)"
+                  }}>
+                    <Icon name="check" className="w-10 h-10" />
+                  </div>
+                  <h3 style={{ fontSize: "20px", fontWeight: "700", color: "var(--text)", margin: "0 0 8px" }}>Order Placed Successfully! 🎉</h3>
+                  <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 20px", maxWidth: "320px" }}>
+                    Your purchase has been logged under audit trail observables, and stock levels have been dynamically updated.
+                  </p>
+
+                  <Card style={{ width: "100%", padding: "18px", background: "var(--surface-soft)", border: "1px solid var(--border)", display: "grid", gap: "10px", textAlign: "left", marginBottom: "24px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--muted)", fontSize: "13px" }}>Order ID:</span>
+                      <strong style={{ color: "var(--text)", fontSize: "13px" }}>#{placedOrder.id}</strong>
+                    </div>
+                    {role !== "CUSTOMER" && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--muted)", fontSize: "13px" }}>Customer:</span>
+                        <strong style={{ color: "var(--text)", fontSize: "13px" }}>
+                          {customers.find(c => String(c.id) === String(placedOrder.customer_id))?.full_name || `Customer #${placedOrder.customer_id}`}
+                        </strong>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--muted)", fontSize: "13px" }}>Payment Status:</span>
+                      <Badge tone="success">PAID (SIMULATED)</Badge>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--muted)", fontSize: "13px" }}>Card Used:</span>
+                      <strong style={{ color: "var(--text)", fontSize: "13px" }}>Visa ending in •••• {cardNumber.slice(-4) || "4242"}</strong>
+                    </div>
+                    <div style={{ height: "1px", background: "var(--border)", margin: "4px 0" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <strong style={{ color: "var(--text)" }}>Total Amount:</strong>
+                      <strong style={{ color: "var(--accent)", fontSize: "16px" }}>{money(placedOrder.total_amount)}</strong>
+                    </div>
+                  </Card>
+
+                  <div style={{ display: "grid", gap: "12px", width: "100%" }}>
+                    <Button 
+                      variant="primary" 
+                      onClick={() => {
+                        setView("orders");
+                        openOrderDrawer(placedOrder.id);
+                        closeCartDrawer();
+                      }}
+                      style={{ width: "100%", height: "46px", borderRadius: "10px", fontWeight: "700" }}
+                    >
+                      Inspect Order Details & Timeline
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      onClick={closeCartDrawer}
+                      style={{ width: "100%", height: "46px", borderRadius: "10px" }}
+                    >
+                      Continue Shopping
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* STEP 1: CART REVIEW */}
+                  {checkoutStep === 1 && (
+                    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <p style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)", marginBottom: "14px" }}>
+                        {cart.length} item{cart.length !== 1 ? "s" : ""} in cart
+                      </p>
+
+                      {cart.length > 0 ? (
+                        <div style={{ display: "grid", gap: "10px", flex: 1, alignContent: "start", marginBottom: "20px" }}>
+                          {cart.map((item) => (
+                            <div key={item.product.id} className="cart-item-card">
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                <div style={{ flex: 1 }}>
+                                  <div className="cart-item-card__name">{item.product.name}</div>
+                                  <div className="cart-item-card__meta">
+                                    {money(item.product.price)} each · {item.product.category || "General"}
+                                  </div>
+                                </div>
+                                <button className="cart-item-card__remove" onClick={() => removeFromCart(item.product.id)}>Remove</button>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <div className="qty-stepper">
+                                  <button
+                                    className="qty-stepper__btn"
+                                    onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                                    disabled={item.quantity <= 1}
+                                  >−</button>
+                                  <span className="qty-stepper__value">{item.quantity}</span>
+                                  <button
+                                    className="qty-stepper__btn"
+                                    onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                                    disabled={item.quantity >= item.product.quantity_in_stock}
+                                  >+</button>
+                                </div>
+                                <span className="cart-item-card__subtotal">{money(item.product.price * item.quantity)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                          <Icon name="cart" className="w-12 h-12" style={{ margin: "0 auto 16px", opacity: 0.3 }} />
+                          <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "6px" }}>Your cart is empty</h3>
+                          <p style={{ fontSize: "13px" }}>Browse the Catalog and add items to start checkout.</p>
+                          <Button variant="secondary" style={{ marginTop: "16px" }} onClick={() => { setCartOpen(false); setView("products"); }}>Browse Catalog</Button>
+                        </div>
+                      )}
+
+                      {cart.length > 0 && (
+                        <div style={{ paddingTop: "18px", borderTop: "2px solid var(--border)", display: "grid", gap: "14px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "14px", color: "var(--muted)", fontWeight: "500" }}>Subtotal</span>
+                            <strong style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "22px", fontWeight: "800", color: "var(--text)", letterSpacing: "-0.02em" }}>
+                              {money(cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0))}
+                            </strong>
+                          </div>
+                          <button
+                            className="cart-cta-btn"
+                            onClick={() => setCheckoutStep(role === "CUSTOMER" ? 3 : 2)}
+                          >
+                            {role === "CUSTOMER" ? "Proceed to Payment →" : "Next: Assign Customer →"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* STEP 2: CUSTOMER SELECT (Admin/Staff Only) */}
+                  {checkoutStep === 2 && role !== "CUSTOMER" && (
+                    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <h3 style={{ fontSize: "14px", fontWeight: "700", marginBottom: "12px", color: "var(--text)" }}>Assign Customer Profile</h3>
+                      <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "20px" }}>
+                        Assign this system order to a registered customer. This will update their historical purchasing metrics.
+                      </p>
+
+                      <div style={{ flex: 1 }}>
+                        <label className="field" style={{ display: "block" }}>
+                          <span className="field-label" style={{ fontWeight: "700", fontSize: "12px", color: "var(--muted)", textTransform: "uppercase" }}>Select Customer:</span>
+                          <select 
+                            className="ui-input" 
+                            value={checkoutCustomerId} 
+                            onChange={(e) => setCheckoutCustomerId(e.target.value)} 
+                            style={{ marginTop: "8px", width: "100%", height: "44px", borderRadius: "8px", padding: "0 12px" }}
+                          >
+                            <option value="">-- Choose Customer --</option>
+                            {customers.map((c) => (
+                              <option key={c.id} value={c.id}>{c.full_name} ({c.email})</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div style={{ paddingTop: "18px", borderTop: "2px solid var(--border)", display: "grid", gap: "10px" }}>
+                        <button
+                          className="cart-cta-btn"
+                          onClick={() => setCheckoutStep(3)}
+                          disabled={!checkoutCustomerId}
+                        >
+                          Next: Payment Details →
+                        </button>
+                        <button className="cart-back-btn" onClick={() => setCheckoutStep(1)}>← Back to Cart</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 3: PAYMENT DETAILS (Simulated Card Details) */}
+                  {checkoutStep === 3 && (
+                    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <h3 style={{ fontSize: "14px", fontWeight: "700", marginBottom: "12px", color: "var(--text)" }}>Simulated Payment Details</h3>
+                      <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "16px" }}>
+                        Enter simulated card info to complete the order. No live transactions are processed.
+                      </p>
+
+                      <div style={{ flex: 1, display: "grid", gap: "16px", alignContent: "start" }}>
+                        
+                        {/* Interactive Card Graphic Mockup */}
+                        <div style={{
+                          background: "linear-gradient(135deg, var(--accent-strong), #0f172a)",
+                          borderRadius: "16px",
+                          padding: "20px",
+                          color: "#fff",
+                          boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+                          position: "relative",
+                          overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          height: "150px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between"
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{
+                              width: "36px",
+                              height: "26px",
+                              background: "linear-gradient(135deg, #ffd700, #ffa500)",
+                              borderRadius: "6px"
+                            }} />
+                            <strong style={{ fontSize: "16px", fontStyle: "italic", opacity: 0.9 }}>StockFlow Pay</strong>
+                          </div>
+
+                          <div style={{ fontSize: "16px", letterSpacing: "3px", fontFamily: "Courier, monospace", margin: "10px 0" }}>
+                            {cardNumber ? cardNumber.replace(/(\d{4})/g, "$1 ").trim() : "•••• •••• •••• ••••"}
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", textTransform: "uppercase", opacity: 0.8 }}>
+                            <div>
+                              <div style={{ fontSize: "7px", marginBottom: "2px" }}>Card Holder</div>
+                              <div>{cardHolderName || currentUser?.full_name || "VALUED MEMBER"}</div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: "7px", marginBottom: "2px" }}>Expires</div>
+                              <div>{cardExpiry || "MM/YY"}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Input Fields */}
+                        <div style={{ display: "grid", gap: "10px" }}>
+                          <label className="field">
+                            <span className="field-label" style={{ fontSize: "11px", fontWeight: "700" }}>Cardholder Name:</span>
+                            <input 
+                              type="text" 
+                              className="ui-input" 
+                              value={cardHolderName} 
+                              onChange={(e) => setCardHolderName(e.target.value)} 
+                              placeholder={currentUser?.full_name || "John Doe"}
+                              style={{ width: "100%", height: "38px" }}
+                            />
+                          </label>
+
+                          <label className="field">
+                            <span className="field-label" style={{ fontSize: "11px", fontWeight: "700" }}>Card Number:</span>
+                            <input 
+                              type="text" 
+                              maxLength="16"
+                              className="ui-input" 
+                              value={cardNumber} 
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, "");
+                                setCardNumber(val);
+                              }} 
+                              placeholder="4111222233334444"
+                              style={{ width: "100%", height: "38px" }}
+                            />
+                          </label>
+
+                          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "10px" }}>
+                            <label className="field">
+                              <span className="field-label" style={{ fontSize: "11px", fontWeight: "700" }}>Expiry Date:</span>
+                              <input 
+                                type="text" 
+                                maxLength="5"
+                                className="ui-input" 
+                                value={cardExpiry} 
+                                onChange={(e) => {
+                                  let val = e.target.value;
+                                  if (val.length === 2 && !val.includes("/")) {
+                                    val += "/";
+                                  }
+                                  setCardExpiry(val);
+                                }} 
+                                placeholder="MM/YY"
+                                style={{ width: "100%", height: "38px" }}
+                              />
+                            </label>
+
+                            <label className="field">
+                              <span className="field-label" style={{ fontSize: "11px", fontWeight: "700" }}>CVV:</span>
+                              <input 
+                                type="password" 
+                                maxLength="3"
+                                className="ui-input" 
+                                value={cardCvv} 
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "");
+                                  setCardCvv(val);
+                                }} 
+                                placeholder="***"
+                                style={{ width: "100%", height: "38px" }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ paddingTop: "18px", borderTop: "2px solid var(--border)", display: "grid", gap: "10px", marginTop: "12px" }}>
+                        <button
+                          className="cart-cta-btn"
+                          onClick={() => setCheckoutStep(4)}
+                          disabled={!cardHolderName || cardNumber.length < 15 || !cardExpiry.includes("/") || cardCvv.length < 3}
+                        >
+                          Next: Confirm Order →
+                        </button>
+                        <button className="cart-back-btn" onClick={() => setCheckoutStep(role === "CUSTOMER" ? 1 : 2)}>← Back</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 4: CONFIRMATION */}
+                  {checkoutStep === 4 && (
+                    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                      <h3 style={{ fontSize: "14px", fontWeight: "700", marginBottom: "12px", color: "var(--text)" }}>Confirm Order Details</h3>
+                      
+                      <div style={{ flex: 1, display: "grid", gap: "16px", alignContent: "start" }}>
+                        <Card style={{ padding: "16px", background: "var(--surface-soft)", border: "1px solid var(--border)", display: "grid", gap: "8px" }}>
+                          <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--muted)", textTransform: "uppercase" }}>Purchasing Mode</div>
+                          <strong style={{ color: "var(--text)", fontSize: "13px" }}>
+                            {role === "CUSTOMER" ? "Self-Service Checkout" : "Operations Assisted Checkout"}
+                          </strong>
+
+                          {role !== "CUSTOMER" && (
+                            <>
+                              <div style={{ height: "1px", background: "var(--border)", margin: "4px 0" }} />
+                              <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--muted)", textTransform: "uppercase" }}>Assigned Customer</div>
+                              <strong style={{ color: "var(--text)", fontSize: "13px" }}>
+                                {customers.find(c => String(c.id) === String(checkoutCustomerId))?.full_name || `Customer #${checkoutCustomerId}`}
+                              </strong>
+                              <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                                {customers.find(c => String(c.id) === String(checkoutCustomerId))?.email}
+                              </span>
+                            </>
+                          )}
+
+                          <div style={{ height: "1px", background: "var(--border)", margin: "4px 0" }} />
+                          <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--muted)", textTransform: "uppercase" }}>Simulated Payment Method</div>
+                          <strong style={{ color: "var(--text)", fontSize: "13px" }}>
+                            Visa ending in •••• {cardNumber.slice(-4) || "4242"}
+                          </strong>
+                          <span style={{ fontSize: "11px", color: "var(--muted)", textTransform: "uppercase" }}>
+                            Holder: {cardHolderName}
+                          </span>
+                        </Card>
+
+                        <div style={{ display: "grid", gap: "8px" }}>
+                          <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--muted)", textTransform: "uppercase", paddingLeft: "4px" }}>Order Summary</div>
+                          <div style={{ maxHeight: "150px", overflowY: "auto", display: "grid", gap: "6px", paddingRight: "4px" }}>
+                            {cart.map((item) => (
+                              <div key={item.product.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: "8px", background: "var(--surface-soft)", fontSize: "13px" }}>
+                                <span>{item.product.name} <span style={{ color: "var(--muted)" }}>x{item.quantity}</span></span>
+                                <strong>{money(item.product.price * item.quantity)}</strong>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ paddingTop: "18px", borderTop: "2px solid var(--border)", display: "grid", gap: "14px", marginTop: "12px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "14px", color: "var(--muted)", fontWeight: "500" }}>Total Due</span>
+                          <strong style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "26px", fontWeight: "800", color: "var(--text)", letterSpacing: "-0.02em" }}>
+                            {money(cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0))}
+                          </strong>
+                        </div>
+                        <button
+                          className="cart-cta-btn"
+                          onClick={submitCartOrder}
+                          disabled={busyAction === "order"}
+                        >
+                          {busyAction === "order" ? "Placing Order…" : "✓ Confirm & Place Order"}
+                        </button>
+                        <button className="cart-back-btn" onClick={() => setCheckoutStep(3)}>← Back to Payment</button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+            </div>
+          </div>
+        </>
+      )}
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </AppChrome>

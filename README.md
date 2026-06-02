@@ -25,6 +25,8 @@ StockFlow is a high-performance, containerized SaaS Operations Console designed 
 - **Interactive Swagger Docs**: [https://stockflow-backend-mgax.onrender.com/docs](https://stockflow-backend-mgax.onrender.com/docs)
 - **Portfolio Demo Video**: `<REPLACE_WITH_ACTUAL_DEMO_VIDEO_URL>`
 
+> 📖 **Full Setup Guide:** For step-by-step installation instructions, environment variable reference, local dev setup, Docker guide, checkout workflow documentation, and deployment instructions — see **[SETUP.md](./SETUP.md)**.
+
 ---
 
 ## 📋 2. Project Overview

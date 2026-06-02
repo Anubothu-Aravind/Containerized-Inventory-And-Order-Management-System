@@ -56,7 +56,7 @@ async def clear_all_notifications(
     """
     Mark all persistent alerts as read.
     """
-    stmt = update(Notification).where(Notification.is_read == False).values(is_read=True)
+    stmt = update(Notification).where(Notification.is_read.is_(False)).values(is_read=True)
     await db.execute(stmt)
     await db.commit()
     return {"status": "success", "message": "All notifications marked as read"}
