@@ -14,9 +14,21 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
+    # Ensure production Vercel domains and local hosts are always allowed
+    origins = list(settings.CORS_ORIGINS)
+    for origin in [
+        "https://containerized-inventory-and-order-m.vercel.app",
+        "https://stockflow-vercel.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]:
+        if origin not in origins:
+            origins.append(origin)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=origins,
+        allow_origin_regex=r"https://containerized-inventory-and-order-m(-[a-zA-Z0-9-]+)?\.vercel\.app",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
